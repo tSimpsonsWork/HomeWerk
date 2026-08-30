@@ -1,27 +1,28 @@
 package com.homewerk.backend.grocery.provider;
 
 import com.homewerk.backend.grocery.client.KrogerClient;
-import com.homewerk.backend.grocery.dto.kroger.KrogerDateResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerProductSearchResponse;
 import com.homewerk.backend.grocery.mapper.KrogerLocationMapper;
+import com.homewerk.backend.grocery.mapper.KrogerProductLocationMapper;
 import com.homewerk.backend.grocery.mapper.KrogerProductMapper;
+import com.homewerk.backend.grocery.model.GroceryAvailability;
 import com.homewerk.backend.grocery.model.GroceryPrice;
 import com.homewerk.backend.grocery.model.GroceryProduct;
 import com.homewerk.backend.grocery.model.GroceryStore;
+import com.homewerk.backend.grocery.provider.model.KrogerProductLocationData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class KrogerProvider implements GroceryProvider, GroceryStoreProvider, GroceryPriceProvider {
+public class KrogerProvider implements GroceryProvider, GroceryStoreProvider, GroceryPriceProvider, GroceryAvailabilityProvider {
 
     private final KrogerClient krogerClient;
     private final KrogerProductMapper mapper;
     private final KrogerLocationMapper locationMapper;
+    private final KrogerProductLocationMapper productLocationMapper;
 
     @Override
     public List<GroceryProduct> searchProducts(String query) {
@@ -46,6 +47,33 @@ public class KrogerProvider implements GroceryProvider, GroceryStoreProvider, Gr
             String productId,
             String storeId) {
 
+        KrogerProductLocationData data =
+                getProductLocationData(productId, storeId);
+
+        return data == null
+                ? List.of()
+                : List.of(data.price());
+    }
+
+    @Override
+    public GroceryAvailability getAvailability(
+            String productId,
+            String storeId) {
+
+        KrogerProductLocationData data =
+                getProductLocationData(productId, storeId);
+
+        return data == null
+                ? null
+                : data.availability();
+    }
+
+
+
+    private KrogerProductLocationData getProductLocationData(
+            String productId,
+            String storeId) {
+
         KrogerProductSearchResponse response =
                 krogerClient.searchProductsAtLocation(
                         productId,
@@ -55,30 +83,12 @@ public class KrogerProvider implements GroceryProvider, GroceryStoreProvider, Gr
         return response.data()
                 .stream()
                 .flatMap(product -> product.items().stream())
-                .filter(item -> item.price() != null)
-                .map(item -> new GroceryPrice(
+                .findFirst()
+                .map(item -> productLocationMapper.toProductLocationData(
                         productId,
                         storeId,
-                        toBigDecimal(item.price().regular()),
-                        toBigDecimal(item.price().promo()),
-                        toInstant(item.price().effectiveDate()),
-                        toInstant(item.price().expirationDate()),
-                        item.size(),
-                        item.soldBy()
+                        item
                 ))
-                .toList();
-    }
-
-
-    private BigDecimal toBigDecimal(Double value) {
-        return value == null
-                ? null
-                : BigDecimal.valueOf(value);
-    }
-
-    private Instant toInstant(KrogerDateResponse date) {
-        return date == null || date.value() == null
-                ? null
-                : Instant.parse(date.value());
+                .orElse(null);
     }
 }

@@ -1,8 +1,10 @@
 package com.homewerk.backend.grocery.service;
 
+import com.homewerk.backend.grocery.model.GroceryAvailability;
 import com.homewerk.backend.grocery.model.GroceryPrice;
 import com.homewerk.backend.grocery.model.GroceryProduct;
 import com.homewerk.backend.grocery.model.GroceryStore;
+import com.homewerk.backend.grocery.provider.GroceryAvailabilityProvider;
 import com.homewerk.backend.grocery.provider.GroceryPriceProvider;
 import com.homewerk.backend.grocery.provider.GroceryProvider;
 import com.homewerk.backend.grocery.provider.GroceryStoreProvider;
@@ -18,11 +20,13 @@ public class GroceryService {
     private final GroceryProvider groceryProvider;
     private final GroceryStoreProvider groceryStoreProvider;
     private final GroceryPriceProvider groceryPriceProvider;
+    private final GroceryAvailabilityProvider groceryAvailabilityProvider;
 
     public List<GroceryProduct> searchProducts(String query) {
         return groceryProvider.searchProducts(query);
     }
     public List<GroceryStore> findStores(String postalCode) {return groceryStoreProvider.findStores(postalCode);}
     public List<GroceryPrice> getPrices(String productId, String storeId) {return groceryPriceProvider.getPrices(productId, storeId);}
+    public GroceryAvailability getAvailability(String productId, String storeId) {return groceryAvailabilityProvider.getAvailability(productId, storeId);}
 
 }

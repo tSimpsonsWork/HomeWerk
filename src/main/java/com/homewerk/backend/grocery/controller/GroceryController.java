@@ -1,5 +1,6 @@
 package com.homewerk.backend.grocery.controller;
 
+import com.homewerk.backend.grocery.model.GroceryAvailability;
 import com.homewerk.backend.grocery.model.GroceryPrice;
 import com.homewerk.backend.grocery.model.GroceryProduct;
 import com.homewerk.backend.grocery.model.GroceryStore;
@@ -31,6 +32,12 @@ public class GroceryController {
     @GetMapping("/prices")
     public List<GroceryPrice> getPrices(@RequestParam String productId, @RequestParam String storeId) {
         return groceryService.getPrices(productId, storeId);
+    }
+
+    //GET http://localhost:8080/api/grocery/availability?productId=0001111041700&storeId=01400513
+    @GetMapping("/availability")
+    public GroceryAvailability getAvailability(@RequestParam String productId, @RequestParam String storeId) {
+        return groceryService.getAvailability(productId, storeId);
     }
 
 
