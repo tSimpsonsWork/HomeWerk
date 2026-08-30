@@ -1,9 +1,9 @@
 package com.homewerk.backend.grocery.provider;
 
 import com.homewerk.backend.grocery.client.KrogerClient;
-import com.homewerk.backend.grocery.dto.kroger.KrogerProductResponse;
 import com.homewerk.backend.grocery.mapper.KrogerLocationMapper;
 import com.homewerk.backend.grocery.mapper.KrogerProductMapper;
+import com.homewerk.backend.grocery.model.GroceryPrice;
 import com.homewerk.backend.grocery.model.GroceryProduct;
 import com.homewerk.backend.grocery.model.GroceryStore;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class KrogerProvider implements GroceryProvider,GroceryStoreProvider {
+public class KrogerProvider implements GroceryProvider, GroceryStoreProvider, GroceryPriceProvider {
 
     private final KrogerClient krogerClient;
     private final KrogerProductMapper mapper;
@@ -21,7 +21,6 @@ public class KrogerProvider implements GroceryProvider,GroceryStoreProvider {
 
     @Override
     public List<GroceryProduct> searchProducts(String query) {
-
         return krogerClient.searchProducts(query)
                 .data()
                 .stream()
@@ -36,5 +35,13 @@ public class KrogerProvider implements GroceryProvider,GroceryStoreProvider {
                 .stream()
                 .map(locationMapper::toGroceryStore)
                 .toList();
+    }
+
+    @Override
+    public List<GroceryPrice> getPrices(
+            String productId,
+            String storeId) {
+
+        return List.of();
     }
 }

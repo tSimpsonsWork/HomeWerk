@@ -20,7 +20,9 @@ public class KrogerLocationMapper {
                 location.address().addressLine1(),
                 location.address().city(),
                 location.address().state(),
-                location.address().zipCode()
+                location.address().zipCode(),
+                location.geolocation().latitude(),
+                location.geolocation().longitude()
         );
     }
 }

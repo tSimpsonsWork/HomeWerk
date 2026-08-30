@@ -2,6 +2,7 @@ package com.homewerk.backend.grocery.client;
 
 import com.homewerk.backend.config.KrogerProperties;
 import com.homewerk.backend.grocery.dto.kroger.KrogerLocationSearchResponse;
+import com.homewerk.backend.grocery.dto.kroger.KrogerProductDetailsResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerTokenResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerProductSearchResponse;
 import lombok.RequiredArgsConstructor;
@@ -102,5 +103,28 @@ public class KrogerClient {
                 )
                 .retrieve()
                 .body(KrogerLocationSearchResponse.class);
+    }
+
+    public KrogerProductDetailsResponse getProduct(
+            String productId,
+            String locationId) {
+
+        String token = getAccessToken();
+
+        return restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1/products/{productId}")
+                        .queryParam("filter.locationId", locationId)
+                        .build(productId))
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + token
+                )
+                .header(
+                        HttpHeaders.ACCEPT,
+                        MediaType.APPLICATION_JSON_VALUE
+                )
+                .retrieve()
+                .body(KrogerProductDetailsResponse.class);
     }
 }

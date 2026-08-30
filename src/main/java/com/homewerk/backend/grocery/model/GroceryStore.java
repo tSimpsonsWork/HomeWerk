@@ -8,5 +8,7 @@ public record GroceryStore(
         String address,
         String city,
         String state,
-        String postalCode
+        String postalCode,
+        Double latitude,
+        Double longitude
 ) {}

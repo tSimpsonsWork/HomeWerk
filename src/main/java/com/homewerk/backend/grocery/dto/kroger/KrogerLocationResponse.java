@@ -4,6 +4,7 @@ public record KrogerLocationResponse(
         String locationId,
         String name,
         String chain,
-        KrogerAddressResponse address
+        KrogerAddressResponse address,
+        KrogerGeolocationResponse geolocation
 ) {
 }

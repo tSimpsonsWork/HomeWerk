@@ -1,13 +1,11 @@
 package com.homewerk.backend.grocery.controller;
 
+import com.homewerk.backend.grocery.model.GroceryPrice;
 import com.homewerk.backend.grocery.model.GroceryProduct;
 import com.homewerk.backend.grocery.model.GroceryStore;
 import com.homewerk.backend.grocery.service.GroceryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,10 +21,17 @@ public class GroceryController {
         return groceryService.searchProducts(query);
     }
 
-    //GET http://localhost:8080/api/grocery/stores?zipCode=33009
+    //GET http://localhost:8080/api/grocery/stores?zipCode=63304
     @GetMapping("/stores")
     public List<GroceryStore> findStores(@RequestParam String zipCode) {
         return groceryService.findStores(zipCode);
     }
+
+    //GET http://localhost:8080/api/grocery/prices?productId=0001111041700&storeId=09000411
+    @GetMapping("/prices")
+    public List<GroceryPrice> getPrices(@RequestParam String productId, @RequestParam String storeId) {
+        return groceryService.getPrices(productId, storeId);
+    }
+
 
 }

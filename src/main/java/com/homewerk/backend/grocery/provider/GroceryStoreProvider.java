@@ -1,6 +1,5 @@
 package com.homewerk.backend.grocery.provider;
 
-import com.homewerk.backend.grocery.model.GroceryProduct;
 import com.homewerk.backend.grocery.model.GroceryStore;
 
 import java.util.List;
