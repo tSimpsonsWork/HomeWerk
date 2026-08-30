@@ -11,6 +11,11 @@ public record GroceryPrice(
         Instant effectiveDate,
         Instant expirationDate,
         String size,
-        String soldBy
+        String soldBy,
+        String stockLevel,
+        Boolean curbside,
+        Boolean delivery,
+        Boolean inStore,
+        Boolean shipToHome
 ) {
 }

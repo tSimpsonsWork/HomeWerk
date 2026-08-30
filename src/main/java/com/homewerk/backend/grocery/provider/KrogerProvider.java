@@ -3,26 +3,28 @@ package com.homewerk.backend.grocery.provider;
 import com.homewerk.backend.grocery.client.KrogerClient;
 import com.homewerk.backend.grocery.dto.kroger.KrogerProductSearchResponse;
 import com.homewerk.backend.grocery.mapper.KrogerLocationMapper;
-import com.homewerk.backend.grocery.mapper.KrogerProductLocationMapper;
 import com.homewerk.backend.grocery.mapper.KrogerProductMapper;
-import com.homewerk.backend.grocery.model.GroceryAvailability;
 import com.homewerk.backend.grocery.model.GroceryPrice;
 import com.homewerk.backend.grocery.model.GroceryProduct;
 import com.homewerk.backend.grocery.model.GroceryStore;
-import com.homewerk.backend.grocery.provider.model.KrogerProductLocationData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.homewerk.backend.grocery.util.GroceryDataUtils.toBigDecimal;
+import static com.homewerk.backend.grocery.util.GroceryDataUtils.toInstant;
+
 @Component
 @RequiredArgsConstructor
-public class KrogerProvider implements GroceryProvider, GroceryStoreProvider, GroceryPriceProvider, GroceryAvailabilityProvider {
+public class KrogerProvider
+        implements GroceryProvider,
+        GroceryStoreProvider,
+        GroceryPriceProvider {
 
     private final KrogerClient krogerClient;
     private final KrogerProductMapper mapper;
     private final KrogerLocationMapper locationMapper;
-    private final KrogerProductLocationMapper productLocationMapper;
 
     @Override
     public List<GroceryProduct> searchProducts(String query) {
@@ -43,34 +45,7 @@ public class KrogerProvider implements GroceryProvider, GroceryStoreProvider, Gr
     }
 
     @Override
-    public List<GroceryPrice> getPrices(
-            String productId,
-            String storeId) {
-
-        KrogerProductLocationData data =
-                getProductLocationData(productId, storeId);
-
-        return data == null
-                ? List.of()
-                : List.of(data.price());
-    }
-
-    @Override
-    public GroceryAvailability getAvailability(
-            String productId,
-            String storeId) {
-
-        KrogerProductLocationData data =
-                getProductLocationData(productId, storeId);
-
-        return data == null
-                ? null
-                : data.availability();
-    }
-
-
-
-    private KrogerProductLocationData getProductLocationData(
+    public GroceryPrice getPrice(
             String productId,
             String storeId) {
 
@@ -84,10 +59,38 @@ public class KrogerProvider implements GroceryProvider, GroceryStoreProvider, Gr
                 .stream()
                 .flatMap(product -> product.items().stream())
                 .findFirst()
-                .map(item -> productLocationMapper.toProductLocationData(
+                .map(item -> new GroceryPrice(
                         productId,
                         storeId,
-                        item
+                        item.price() != null
+                                ? toBigDecimal(item.price().regular())
+                                : null,
+                        item.price() != null
+                                ? toBigDecimal(item.price().promo())
+                                : null,
+                        item.price() != null
+                                ? toInstant(item.price().effectiveDate())
+                                : null,
+                        item.price() != null
+                                ? toInstant(item.price().expirationDate())
+                                : null,
+                        item.size(),
+                        item.soldBy(),
+                        item.inventory() != null
+                                ? item.inventory().stockLevel()
+                                : null,
+                        item.fulfillment() != null
+                                ? item.fulfillment().curbside()
+                                : null,
+                        item.fulfillment() != null
+                                ? item.fulfillment().delivery()
+                                : null,
+                        item.fulfillment() != null
+                                ? item.fulfillment().inStore()
+                                : null,
+                        item.fulfillment() != null
+                                ? item.fulfillment().shipToHome()
+                                : null
                 ))
                 .orElse(null);
     }

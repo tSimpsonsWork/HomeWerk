@@ -1,7 +1,6 @@
 package com.homewerk.backend.grocery.mapper;
 
 import com.homewerk.backend.grocery.dto.kroger.KrogerItemResponse;
-import com.homewerk.backend.grocery.model.GroceryAvailability;
 import com.homewerk.backend.grocery.model.GroceryPrice;
 import com.homewerk.backend.grocery.provider.model.KrogerProductLocationData;
 import org.springframework.stereotype.Component;
@@ -18,8 +17,7 @@ public class KrogerProductLocationMapper {
             KrogerItemResponse item) {
 
         return new KrogerProductLocationData(
-                toGroceryPrice(productId, storeId, item),
-                toGroceryAvailability(productId, storeId, item)
+                toGroceryPrice(productId, storeId, item)
         );
     }
 
@@ -31,23 +29,20 @@ public class KrogerProductLocationMapper {
         return new GroceryPrice(
                 productId,
                 storeId,
-                toBigDecimal(item.price().regular()),
-                toBigDecimal(item.price().promo()),
-                toInstant(item.price().effectiveDate()),
-                toInstant(item.price().expirationDate()),
+                item.price() != null
+                        ? toBigDecimal(item.price().regular())
+                        : null,
+                item.price() != null
+                        ? toBigDecimal(item.price().promo())
+                        : null,
+                item.price() != null
+                        ? toInstant(item.price().effectiveDate())
+                        : null,
+                item.price() != null
+                        ? toInstant(item.price().expirationDate())
+                        : null,
                 item.size(),
-                item.soldBy()
-        );
-    }
-
-    private GroceryAvailability toGroceryAvailability(
-            String productId,
-            String storeId,
-            KrogerItemResponse item) {
-
-        return new GroceryAvailability(
-                productId,
-                storeId,
+                item.soldBy(),
                 item.inventory() != null
                         ? item.inventory().stockLevel()
                         : null,
