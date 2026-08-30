@@ -1,12 +1,11 @@
 package com.homewerk.backend.grocery.mapper;
 
-import com.homewerk.backend.grocery.dto.kroger.KrogerNutritionResponse;
-import com.homewerk.backend.grocery.dto.kroger.KrogerNutrientResponse;
-import com.homewerk.backend.grocery.dto.kroger.KrogerProductResponse;
+import com.homewerk.backend.grocery.dto.kroger.*;
 import com.homewerk.backend.grocery.model.GroceryNutrition;
 import com.homewerk.backend.grocery.model.GroceryProduct;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -36,8 +35,51 @@ public class KrogerProductMapper {
     }
 
     private String extractImageUrl(KrogerProductResponse product) {
-        // We'll implement this next.
-        return null;
+
+        if (product.images() == null || product.images().isEmpty()) {
+            return null;
+        }
+
+        // First choice: featured medium image
+        String featuredImage = product.images().stream()
+                .filter(image -> Boolean.TRUE.equals(image.featured()))
+                .flatMap(image -> safeSizes(image).stream())
+                .filter(size -> "medium".equalsIgnoreCase(size.size()))
+                .map(KrogerImageSizeResponse::url)
+                .findFirst()
+                .orElse(null);
+
+        if (featuredImage != null) {
+            return featuredImage;
+        }
+
+        // Second choice: any medium image
+        String mediumImage = product.images().stream()
+                .flatMap(image -> safeSizes(image).stream())
+                .filter(size -> "medium".equalsIgnoreCase(size.size()))
+                .map(KrogerImageSizeResponse::url)
+                .findFirst()
+                .orElse(null);
+
+        if (mediumImage != null) {
+            return mediumImage;
+        }
+
+        // Final fallback: first available image URL
+        return product.images().stream()
+                .flatMap(image -> safeSizes(image).stream())
+                .map(KrogerImageSizeResponse::url)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<KrogerImageSizeResponse> safeSizes(
+            KrogerImageResponse image) {
+
+        return image.sizes() == null
+                ? List.of()
+                : image.sizes();
     }
 
     private GroceryNutrition extractNutrition(

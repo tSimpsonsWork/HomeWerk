@@ -17,6 +17,7 @@ public record KrogerProductResponse(
         String receiptDescription,
         String warnings,
         List<KrogerItemResponse> items,
+        List<KrogerImageResponse> images,
         KrogerTemperatureResponse temperature,
         KrogerRatingsResponse ratingsAndReviews,
         List<KrogerNutritionResponse> nutritionInformation
