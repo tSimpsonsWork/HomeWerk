@@ -1,6 +1,7 @@
 package com.homewerk.backend.grocery.client;
 
 import com.homewerk.backend.config.KrogerProperties;
+import com.homewerk.backend.grocery.dto.kroger.KrogerLocationSearchResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerTokenResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerProductSearchResponse;
 import lombok.RequiredArgsConstructor;
@@ -78,5 +79,28 @@ public class KrogerClient {
                 )
                 .retrieve()
                 .body(KrogerProductSearchResponse.class);
+    }
+
+    public KrogerLocationSearchResponse findLocations(String postalCode) {
+
+        String token = getAccessToken();
+
+        return restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1/locations")
+                        .queryParam("filter.zipCode.near", postalCode)
+                        .queryParam("filter.radiusInMiles", 10)
+                        .queryParam("filter.limit", 10)
+                        .build())
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + token
+                )
+                .header(
+                        HttpHeaders.ACCEPT,
+                        MediaType.APPLICATION_JSON_VALUE
+                )
+                .retrieve()
+                .body(KrogerLocationSearchResponse.class);
     }
 }

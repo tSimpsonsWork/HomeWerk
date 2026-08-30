@@ -5,6 +5,6 @@ import com.homewerk.backend.grocery.model.GroceryStore;
 
 import java.util.List;
 
-public interface GroceryProvider {
-    List<GroceryProduct> searchProducts(String query);
+public interface GroceryStoreProvider {
+    List<GroceryStore> findStores(String postalCode);
 }
