@@ -2,6 +2,10 @@ package com.homewerk.backend.grocery.dto.kroger;
 
 public record KrogerItemResponse(
         String itemId,
-        String size
+        KrogerInventoryResponse inventory,
+        KrogerFulfillmentResponse fulfillment,
+        KrogerPriceResponse price,
+        String size,
+        String soldBy
 ) {
 }

@@ -21,13 +21,13 @@ public class GroceryController {
         return groceryService.searchProducts(query);
     }
 
-    //GET http://localhost:8080/api/grocery/stores?zipCode=63304
+    //GET http://localhost:8080/api/grocery/stores?zipCode=45202
     @GetMapping("/stores")
     public List<GroceryStore> findStores(@RequestParam String zipCode) {
         return groceryService.findStores(zipCode);
     }
 
-    //GET http://localhost:8080/api/grocery/prices?productId=0001111041700&storeId=09000411
+    //GET http://localhost:8080/api/grocery/prices?productId=0001111041700&storeId=01400513
     @GetMapping("/prices")
     public List<GroceryPrice> getPrices(@RequestParam String productId, @RequestParam String storeId) {
         return groceryService.getPrices(productId, storeId);

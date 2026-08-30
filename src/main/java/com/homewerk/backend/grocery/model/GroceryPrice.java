@@ -1,12 +1,16 @@
 package com.homewerk.backend.grocery.model;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 public record GroceryPrice(
         String productId,
         String storeId,
         BigDecimal regularPrice,
-        BigDecimal salePrice,
-        String unit,
-        String size
-) {}
+        BigDecimal promoPrice,
+        Instant effectiveDate,
+        Instant expirationDate,
+        String size,
+        String soldBy
+) {
+}

@@ -90,8 +90,9 @@ public class KrogerClient {
                 .uri(uriBuilder -> uriBuilder
                         .path("/v1/locations")
                         .queryParam("filter.zipCode.near", postalCode)
-                        .queryParam("filter.radiusInMiles", 10)
+                        .queryParam("filter.radiusInMiles", 50)
                         .queryParam("filter.limit", 10)
+                        .queryParam("filter.chain", "KROGER")
                         .build())
                 .header(
                         HttpHeaders.AUTHORIZATION,
@@ -126,5 +127,30 @@ public class KrogerClient {
                 )
                 .retrieve()
                 .body(KrogerProductDetailsResponse.class);
+    }
+
+    public KrogerProductSearchResponse searchProductsAtLocation(
+            String query,
+            String locationId) {
+
+        String token = getAccessToken();
+
+        return restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1/products")
+                        .queryParam("filter.term", query)
+                        .queryParam("filter.locationId", locationId)
+                        .queryParam("filter.limit", 10)
+                        .build())
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + token
+                )
+                .header(
+                        HttpHeaders.ACCEPT,
+                        MediaType.APPLICATION_JSON_VALUE
+                )
+                .retrieve()
+                .body(KrogerProductSearchResponse.class);
     }
 }
