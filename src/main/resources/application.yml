@@ -1,0 +1,26 @@
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/homek
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+
+kroger:
+  client-id: ${KROGER_CLIENT_ID:}
+  client-secret: ${KROGER_CLIENT_SECRET:}
+
+app:
+  bootstrap-admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+
+

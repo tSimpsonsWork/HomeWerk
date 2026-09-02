@@ -5,13 +5,16 @@ import com.homewerk.backend.grocery.dto.kroger.KrogerLocationSearchResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerProductDetailsResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerTokenResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerProductSearchResponse;
+import com.homewerk.backend.grocery.exception.GroceryProviderUnavailableException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -33,6 +36,10 @@ public class KrogerClient {
 
     public String getAccessToken() {
 
+        if (!krogerProperties.isConfigured()) {
+            throw new GroceryProviderUnavailableException("Kroger integration is not configured");
+        }
+
         String credentials =
                 krogerProperties.getClientId()
                         + ":"
@@ -40,30 +47,45 @@ public class KrogerClient {
 
         String encodedCredentials =
                 Base64.getEncoder()
-                        .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+                        .encodeToString(
+                                credentials.getBytes(StandardCharsets.UTF_8)
+                        );
 
-        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> formData =
+                new LinkedMultiValueMap<>();
+
         formData.add("grant_type", "client_credentials");
         formData.add("scope", "product.compact");
-        KrogerTokenResponse response = restClient.post()
-                .uri(TOKEN_URL)
-                .header(
-                        HttpHeaders.AUTHORIZATION,
-                        "Basic " + encodedCredentials
-                )
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(formData)
-                .retrieve()
-                .body(KrogerTokenResponse.class);
 
-        if (response == null || response.accessToken() == null) {
-            throw new IllegalStateException("Failed to obtain Kroger access token");
+        try {
+            KrogerTokenResponse response = restClient.post()
+                    .uri(TOKEN_URL)
+                    .header(
+                            HttpHeaders.AUTHORIZATION,
+                            "Basic " + encodedCredentials
+                    )
+                    .contentType(
+                            MediaType.APPLICATION_FORM_URLENCODED
+                    )
+                    .body(formData)
+                    .retrieve()
+                    .body(KrogerTokenResponse.class);
+
+            if (response == null || response.accessToken() == null) {
+                throw new GroceryProviderUnavailableException("Kroger did not return an access token");
+            }
+
+            return response.accessToken();
+
+        } catch (HttpClientErrorException.Unauthorized ex) {
+            throw new GroceryProviderUnavailableException("Kroger authentication failed");
         }
-        return response.accessToken();
     }
 
     public KrogerProductSearchResponse searchProducts(String query) {
+
         String token = getAccessToken();
+
         return restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/v1/products")

@@ -1,8 +1,0 @@
-spring:
-  application:
-    name: HomeWerk
-
-
-kroger:
-  client-id: ${KROGER_CLIENT_ID}
-  client-secret: ${KROGER_CLIENT_SECRET}
