@@ -1,4 +1,4 @@
-package com.homewerk.backend.grocery.controller;
+package com.homewerk.backend.controller.grocery;
 
 import com.homewerk.backend.grocery.model.GroceryPrice;
 import com.homewerk.backend.grocery.model.GroceryProduct;

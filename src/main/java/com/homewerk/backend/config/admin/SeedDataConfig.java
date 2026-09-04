@@ -1,6 +1,6 @@
 package com.homewerk.backend.config.admin;
 
-import com.homewerk.backend.repository.UserRepository;
+import com.homewerk.backend.user.repository.UserRepository;
 import com.homewerk.backend.user.model.User;
 import com.homewerk.backend.user.enums.UserRole;
 import com.homewerk.backend.user.enums.UserStatus;
