@@ -1,12 +1,13 @@
 package com.homewerk.backend.grocery.client;
 
-import com.homewerk.backend.config.KrogerProperties;
+import com.homewerk.backend.config.kroger.KrogerProperties;
 import com.homewerk.backend.grocery.dto.kroger.KrogerLocationSearchResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerProductDetailsResponse;
-import com.homewerk.backend.grocery.dto.kroger.KrogerTokenResponse;
 import com.homewerk.backend.grocery.dto.kroger.KrogerProductSearchResponse;
+import com.homewerk.backend.grocery.dto.kroger.KrogerTokenResponse;
 import com.homewerk.backend.grocery.exception.GroceryProviderUnavailableException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -14,10 +15,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class KrogerClient {
@@ -37,7 +40,12 @@ public class KrogerClient {
     public String getAccessToken() {
 
         if (!krogerProperties.isConfigured()) {
-            throw new GroceryProviderUnavailableException("Kroger integration is not configured");
+
+            log.warn("KROGER_TOKEN_FAILED reason=NOT_CONFIGURED");
+
+            throw new GroceryProviderUnavailableException(
+                    "Kroger integration is not configured"
+            );
         }
 
         String credentials =
@@ -58,6 +66,7 @@ public class KrogerClient {
         formData.add("scope", "product.compact");
 
         try {
+
             KrogerTokenResponse response = restClient.post()
                     .uri(TOKEN_URL)
                     .header(
@@ -71,14 +80,41 @@ public class KrogerClient {
                     .retrieve()
                     .body(KrogerTokenResponse.class);
 
-            if (response == null || response.accessToken() == null) {
-                throw new GroceryProviderUnavailableException("Kroger did not return an access token");
+            if (response == null
+                    || response.accessToken() == null
+                    || response.accessToken().isBlank()) {
+
+                log.warn("KROGER_TOKEN_FAILED reason=EMPTY_TOKEN");
+
+                throw new GroceryProviderUnavailableException(
+                        "Kroger did not return an access token"
+                );
             }
+
+            log.info("KROGER_TOKEN_ACQUIRED");
 
             return response.accessToken();
 
         } catch (HttpClientErrorException.Unauthorized ex) {
-            throw new GroceryProviderUnavailableException("Kroger authentication failed");
+
+            log.warn("KROGER_TOKEN_FAILED reason=UNAUTHORIZED");
+
+            throw new GroceryProviderUnavailableException(
+                    "Kroger authentication failed",
+                    ex
+            );
+
+        } catch (RestClientException ex) {
+
+            log.warn(
+                    "KROGER_TOKEN_FAILED reason={}",
+                    ex.getClass().getSimpleName()
+            );
+
+            throw new GroceryProviderUnavailableException(
+                    "Kroger token request failed",
+                    ex
+            );
         }
     }
 
@@ -86,46 +122,84 @@ public class KrogerClient {
 
         String token = getAccessToken();
 
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/v1/products")
-                        .queryParam("filter.term", query)
-                        .queryParam("filter.limit", 10)
-                        .build())
-                .header(
-                        HttpHeaders.AUTHORIZATION,
-                        "Bearer " + token
-                )
-                .header(
-                        HttpHeaders.ACCEPT,
-                        MediaType.APPLICATION_JSON_VALUE
-                )
-                .retrieve()
-                .body(KrogerProductSearchResponse.class);
+        try {
+
+            KrogerProductSearchResponse response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/v1/products")
+                            .queryParam("filter.term", query)
+                            .queryParam("filter.limit", 10)
+                            .build())
+                    .header(
+                            HttpHeaders.AUTHORIZATION,
+                            "Bearer " + token
+                    )
+                    .header(
+                            HttpHeaders.ACCEPT,
+                            MediaType.APPLICATION_JSON_VALUE
+                    )
+                    .retrieve()
+                    .body(KrogerProductSearchResponse.class);
+
+            log.info("KROGER_PRODUCT_SEARCH_SUCCESS");
+
+            return response;
+
+        } catch (RestClientException ex) {
+
+            log.warn(
+                    "KROGER_PRODUCT_SEARCH_FAILED reason={}",
+                    ex.getClass().getSimpleName()
+            );
+
+            throw new GroceryProviderUnavailableException(
+                    "Kroger product search failed",
+                    ex
+            );
+        }
     }
 
     public KrogerLocationSearchResponse findLocations(String postalCode) {
 
         String token = getAccessToken();
 
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/v1/locations")
-                        .queryParam("filter.zipCode.near", postalCode)
-                        .queryParam("filter.radiusInMiles", 50)
-                        .queryParam("filter.limit", 10)
-                        .queryParam("filter.chain", "KROGER")
-                        .build())
-                .header(
-                        HttpHeaders.AUTHORIZATION,
-                        "Bearer " + token
-                )
-                .header(
-                        HttpHeaders.ACCEPT,
-                        MediaType.APPLICATION_JSON_VALUE
-                )
-                .retrieve()
-                .body(KrogerLocationSearchResponse.class);
+        try {
+
+            KrogerLocationSearchResponse response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/v1/locations")
+                            .queryParam("filter.zipCode.near", postalCode)
+                            .queryParam("filter.radiusInMiles", 50)
+                            .queryParam("filter.limit", 10)
+                            .queryParam("filter.chain", "KROGER")
+                            .build())
+                    .header(
+                            HttpHeaders.AUTHORIZATION,
+                            "Bearer " + token
+                    )
+                    .header(
+                            HttpHeaders.ACCEPT,
+                            MediaType.APPLICATION_JSON_VALUE
+                    )
+                    .retrieve()
+                    .body(KrogerLocationSearchResponse.class);
+
+            log.info("KROGER_LOCATION_SEARCH_SUCCESS");
+
+            return response;
+
+        } catch (RestClientException ex) {
+
+            log.warn(
+                    "KROGER_LOCATION_SEARCH_FAILED reason={}",
+                    ex.getClass().getSimpleName()
+            );
+
+            throw new GroceryProviderUnavailableException(
+                    "Kroger location search failed",
+                    ex
+            );
+        }
     }
 
     public KrogerProductDetailsResponse getProduct(
@@ -134,21 +208,40 @@ public class KrogerClient {
 
         String token = getAccessToken();
 
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/v1/products/{productId}")
-                        .queryParam("filter.locationId", locationId)
-                        .build(productId))
-                .header(
-                        HttpHeaders.AUTHORIZATION,
-                        "Bearer " + token
-                )
-                .header(
-                        HttpHeaders.ACCEPT,
-                        MediaType.APPLICATION_JSON_VALUE
-                )
-                .retrieve()
-                .body(KrogerProductDetailsResponse.class);
+        try {
+
+            KrogerProductDetailsResponse response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/v1/products/{productId}")
+                            .queryParam("filter.locationId", locationId)
+                            .build(productId))
+                    .header(
+                            HttpHeaders.AUTHORIZATION,
+                            "Bearer " + token
+                    )
+                    .header(
+                            HttpHeaders.ACCEPT,
+                            MediaType.APPLICATION_JSON_VALUE
+                    )
+                    .retrieve()
+                    .body(KrogerProductDetailsResponse.class);
+
+            log.info("KROGER_PRODUCT_DETAILS_SUCCESS");
+
+            return response;
+
+        } catch (RestClientException ex) {
+
+            log.warn(
+                    "KROGER_PRODUCT_DETAILS_FAILED reason={}",
+                    ex.getClass().getSimpleName()
+            );
+
+            throw new GroceryProviderUnavailableException(
+                    "Kroger product details request failed",
+                    ex
+            );
+        }
     }
 
     public KrogerProductSearchResponse searchProductsAtLocation(
@@ -157,22 +250,41 @@ public class KrogerClient {
 
         String token = getAccessToken();
 
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/v1/products")
-                        .queryParam("filter.term", query)
-                        .queryParam("filter.locationId", locationId)
-                        .queryParam("filter.limit", 10)
-                        .build())
-                .header(
-                        HttpHeaders.AUTHORIZATION,
-                        "Bearer " + token
-                )
-                .header(
-                        HttpHeaders.ACCEPT,
-                        MediaType.APPLICATION_JSON_VALUE
-                )
-                .retrieve()
-                .body(KrogerProductSearchResponse.class);
+        try {
+
+            KrogerProductSearchResponse response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/v1/products")
+                            .queryParam("filter.term", query)
+                            .queryParam("filter.locationId", locationId)
+                            .queryParam("filter.limit", 10)
+                            .build())
+                    .header(
+                            HttpHeaders.AUTHORIZATION,
+                            "Bearer " + token
+                    )
+                    .header(
+                            HttpHeaders.ACCEPT,
+                            MediaType.APPLICATION_JSON_VALUE
+                    )
+                    .retrieve()
+                    .body(KrogerProductSearchResponse.class);
+
+            log.info("KROGER_LOCATION_PRODUCT_SEARCH_SUCCESS");
+
+            return response;
+
+        } catch (RestClientException ex) {
+
+            log.warn(
+                    "KROGER_LOCATION_PRODUCT_SEARCH_FAILED reason={}",
+                    ex.getClass().getSimpleName()
+            );
+
+            throw new GroceryProviderUnavailableException(
+                    "Kroger product search at location failed",
+                    ex
+            );
+        }
     }
 }

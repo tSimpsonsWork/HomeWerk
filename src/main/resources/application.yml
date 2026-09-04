@@ -24,3 +24,19 @@ app:
     password: ${ADMIN_PASSWORD:}
 
 
+logging:
+  level:
+    root: WARN
+    # HoMeK application
+    com.homewerk.backend: INFO
+    # Spring framework
+    org.springframework: WARN
+    org.springframework.security: WARN
+    # Database / ORM
+    org.hibernate: WARN
+    org.springframework.data: WARN
+    com.zaxxer.hikari: WARN
+    # Web server
+    org.apache.tomcat: WARN
+
+
