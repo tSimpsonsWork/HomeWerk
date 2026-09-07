@@ -1,6 +1,6 @@
 package com.homewerk.backend.user.service;
 
-import com.homewerk.backend.repository.UserRepository;
+import com.homewerk.backend.user.repository.UserRepository;
 import com.homewerk.backend.user.model.User;
 import com.homewerk.backend.user.enums.UserStatus;
 import lombok.RequiredArgsConstructor;

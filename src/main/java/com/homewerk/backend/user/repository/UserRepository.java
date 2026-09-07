@@ -1,8 +1,7 @@
-package com.homewerk.backend.repository;
-
-import com.homewerk.backend.user.model.User;
+package com.homewerk.backend.user.repository;
 
 import com.homewerk.backend.user.enums.UserRole;
+import com.homewerk.backend.user.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

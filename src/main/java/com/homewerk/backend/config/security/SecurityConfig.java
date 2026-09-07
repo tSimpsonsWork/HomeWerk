@@ -1,9 +1,10 @@
-package com.homewerk.backend.config;
+package com.homewerk.backend.config.security;
 
 import com.homewerk.backend.user.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,22 +22,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(
+    public AuthenticationManager authenticationManager(
             CustomUserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder) {
 
-        DaoAuthenticationProvider provider =
+        DaoAuthenticationProvider authenticationProvider =
                 new DaoAuthenticationProvider(userDetailsService);
 
-        provider.setPasswordEncoder(passwordEncoder);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
 
-        return provider;
+        return new ProviderManager(authenticationProvider);
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            AuthenticationProvider authenticationProvider)
+            AuthenticationManager authenticationManager)
             throws Exception {
 
         http
@@ -44,7 +45,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 )
-                .authenticationProvider(authenticationProvider)
+                .authenticationManager(authenticationManager)
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable());
 
