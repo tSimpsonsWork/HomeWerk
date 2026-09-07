@@ -6,6 +6,8 @@ import com.homewerk.backend.user.enums.UserRole;
 import com.homewerk.backend.user.enums.UserStatus;
 import com.homewerk.backend.user.model.User;
 import com.homewerk.backend.user.repository.UserRepository;
+import com.homewerk.backend.utils.EmailValidationUtil;
+import com.homewerk.backend.utils.InputValidationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,14 +24,18 @@ public class UserService {
     public SignupResponse signup(SignupRequest request) {
 
         String normalizedEmail =
-                request.email()
-                        .trim()
-                        .toLowerCase();
+                EmailValidationUtil.normalize(request.email());
+
+        EmailValidationUtil.validate(normalizedEmail);
+
+        String normalizedDisplayName =
+                InputValidationUtil.normalizeName(
+                        request.displayName(),
+                        "Display name"
+                );
 
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
-
             log.warn("USER_SIGNUP_FAILED reason=EMAIL_ALREADY_EXISTS");
-
             throw new IllegalArgumentException(
                     "An account with this email already exists"
             );
@@ -38,7 +44,7 @@ public class UserService {
         User user = new User();
 
         user.setEmail(normalizedEmail);
-        user.setDisplayName(request.displayName().trim());
+        user.setDisplayName(normalizedDisplayName);
 
         user.setPassword(
                 passwordEncoder.encode(request.password())
