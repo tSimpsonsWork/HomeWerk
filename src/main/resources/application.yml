@@ -40,3 +40,5 @@ logging:
     org.apache.tomcat: WARN
 
 
+server:
+  port: 8081
