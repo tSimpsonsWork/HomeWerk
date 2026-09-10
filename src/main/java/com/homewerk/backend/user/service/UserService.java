@@ -6,6 +6,8 @@ import com.homewerk.backend.user.dto.SignupRequest;
 import com.homewerk.backend.user.dto.SignupResponse;
 import com.homewerk.backend.user.enums.UserRole;
 import com.homewerk.backend.user.enums.UserStatus;
+import com.homewerk.backend.user.exception.EmailAlreadyExistsException;
+import com.homewerk.backend.user.exception.InvalidCredentialsException;
 import com.homewerk.backend.user.model.User;
 import com.homewerk.backend.user.repository.UserRepository;
 import com.homewerk.backend.utils.EmailValidationUtil;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -42,9 +45,7 @@ public class UserService {
 
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             log.warn("USER_SIGNUP_FAILED reason=EMAIL_ALREADY_EXISTS");
-            throw new IllegalArgumentException(
-                    "An account with this email already exists"
-            );
+            throw new EmailAlreadyExistsException();
         }
 
         User user = new User();
@@ -78,18 +79,22 @@ public class UserService {
 
         EmailValidationUtil.validate(normalizedEmail);
 
-        Authentication authentication =
-                authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(
-                                normalizedEmail,
-                                request.password()
-                        )
-                );
+        Authentication authentication;
+
+        try {
+            authentication =
+                    authenticationManager.authenticate(
+                            new UsernamePasswordAuthenticationToken(
+                                    normalizedEmail,
+                                    request.password()
+                            )
+                    );
+        } catch (AuthenticationException exception) {
+            throw new InvalidCredentialsException();
+        }
 
         User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Invalid email or password")
-                );
+                .orElseThrow(InvalidCredentialsException::new);
 
         log.info("USER_LOGIN_SUCCESS");
 

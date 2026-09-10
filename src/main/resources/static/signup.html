@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>HoMeK Sign Up</title>
+
+    <link rel="stylesheet" href="/css/signup.css">
+</head>
+
+<body>
+
+<main class="signup-page">
+
+    <section class="signup-card">
+
+        <h1>HoMeK</h1>
+        <p class="subtitle">Create your account</p>
+
+        <form id="signup-form">
+
+            <div class="form-group">
+                <label for="display-name">Display Name</label>
+
+                <input
+                        id="display-name"
+                        name="displayName"
+                        type="text"
+                        autocomplete="name"
+                        required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+
+                <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autocomplete="email"
+                        required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+
+                <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        autocomplete="new-password"
+                        required
+                >
+            </div>
+
+            <p id="signup-error" class="error-message"></p>
+            <p id="signup-success" class="success-message"></p>
+
+            <button type="submit">
+                Create Account
+            </button>
+
+        </form>
+
+        <div class="signup-links">
+            <p>
+                Already have an account?
+                <a href="/login.html">Sign in</a>
+            </p>
+        </div>
+
+    </section>
+
+</main>
+
+<script src="/js/signup.js"></script>
+
+</body>
+</html>
