@@ -106,4 +106,20 @@ public class UserService {
         );
     }
 
+    public LoginResponse getCurrentUser(String email) {
+
+        User user = userRepository
+                .findByEmailIgnoreCase(email)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Authenticated user not found")
+                );
+
+        return new LoginResponse(
+                user.getId(),
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getRole()
+        );
+    }
+
 }

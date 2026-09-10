@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -49,5 +50,10 @@ public class UserController {
         );
 
         return result.response();
+    }
+
+    @GetMapping("/me")
+    public LoginResponse me(Authentication authentication) {
+        return userService.getCurrentUser(authentication.getName());
     }
 }

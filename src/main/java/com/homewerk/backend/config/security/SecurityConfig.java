@@ -1,6 +1,7 @@
 package com.homewerk.backend.config.security;
 
 import com.homewerk.backend.user.service.CustomUserDetailsService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,14 +43,46 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            AuthenticationManager authenticationManager)
+            AuthenticationManager authenticationManager,
+            SecurityContextRepository securityContextRepository)
             throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
+
+                .securityContext(securityContext ->
+                        securityContext.securityContextRepository(
+                                securityContextRepository
+                        )
+                )
+
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/signup", "/auth/login").permitAll()
+                        .requestMatchers("/auth/me").authenticated()
                         .anyRequest().permitAll()
                 )
+
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(
+                                        HttpServletResponse.SC_UNAUTHORIZED
+                                )
+                        )
+                )
+
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .logoutSuccessHandler((request, response, authentication) ->
+                                response.setStatus(
+                                        HttpServletResponse.SC_NO_CONTENT
+                                )
+                        )
+                        .permitAll()
+                )
+
                 .authenticationManager(authenticationManager)
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable());
