@@ -1,9 +1,6 @@
 package com.homewerk.backend.controller.user;
 
-import com.homewerk.backend.user.dto.LoginRequest;
-import com.homewerk.backend.user.dto.LoginResponse;
-import com.homewerk.backend.user.dto.SignupRequest;
-import com.homewerk.backend.user.dto.SignupResponse;
+import com.homewerk.backend.user.dto.*;
 import com.homewerk.backend.user.service.LoginResult;
 import com.homewerk.backend.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +47,24 @@ public class UserController {
         );
 
         return result.response();
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ForgotPasswordResponse forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        String ipAddress = httpRequest.getRemoteAddr();
+
+        userService.forgotPassword(
+                request.email(),
+                ipAddress
+        );
+
+        return new ForgotPasswordResponse(
+                "If an account exists for this email, password reset instructions will be sent."
+        );
     }
 
     @GetMapping("/me")

@@ -6,13 +6,14 @@ spring:
     username: sa
     password:
 
-
-
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
 
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
 
 kroger:
   client-id: ${KROGER_CLIENT_ID:}
