@@ -4,11 +4,14 @@ import com.homewerk.backend.user.dto.LoginRequest;
 import com.homewerk.backend.user.dto.LoginResponse;
 import com.homewerk.backend.user.dto.SignupRequest;
 import com.homewerk.backend.user.dto.SignupResponse;
+import com.homewerk.backend.user.enums.PasswordResetType;
 import com.homewerk.backend.user.enums.UserRole;
 import com.homewerk.backend.user.enums.UserStatus;
 import com.homewerk.backend.user.exception.EmailAlreadyExistsException;
 import com.homewerk.backend.user.exception.InvalidCredentialsException;
+import com.homewerk.backend.user.model.PasswordResetToken;
 import com.homewerk.backend.user.model.User;
+import com.homewerk.backend.user.repository.PasswordResetTokenRepository;
 import com.homewerk.backend.user.repository.UserRepository;
 import com.homewerk.backend.utils.EmailValidationUtil;
 import com.homewerk.backend.utils.InputValidationUtil;
@@ -20,6 +23,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,6 +37,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final PasswordResetRateLimitService passwordResetRateLimitService;
+    private final PasswordResetTokenService passwordResetTokenService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     public SignupResponse signup(SignupRequest request) {
 
@@ -109,6 +120,69 @@ public class UserService {
                 authentication,
                 response
         );
+    }
+
+    @Transactional
+    public void forgotPassword(
+            String email,
+            String ipAddress
+    ) {
+        String normalizedEmail =
+                EmailValidationUtil.normalize(email);
+
+        boolean allowed =
+                passwordResetRateLimitService.isAllowed(
+                        normalizedEmail,
+                        ipAddress
+                );
+
+        passwordResetRateLimitService.recordAttempt(
+                normalizedEmail,
+                ipAddress
+        );
+
+        if (!allowed) {
+            return;
+        }
+
+        Optional<User> optionalUser =
+                userRepository.findByEmailIgnoreCase(
+                        normalizedEmail
+                );
+
+        if (optionalUser.isEmpty()) {
+            return;
+        }
+
+        User user = optionalUser.get();
+
+        String rawToken =
+                passwordResetTokenService.generateRawToken();
+
+        String tokenHash =
+                passwordResetTokenService.hashToken(rawToken);
+
+        Instant now = Instant.now();
+
+        PasswordResetToken resetToken =
+                new PasswordResetToken();
+
+        resetToken.setUser(user);
+        resetToken.setTokenHash(tokenHash);
+        resetToken.setResetType(
+                PasswordResetType.FORGOT_PASSWORD
+        );
+        resetToken.setCreatedAt(now);
+        resetToken.setExpiresAt(
+                now.plus(Duration.ofMinutes(30))
+        );
+        resetToken.setUsed(false);
+
+        passwordResetTokenRepository.deleteByUser(user);
+        passwordResetTokenRepository.save(resetToken);
+
+        // rawToken is still here in memory.
+        // Later we'll pass THIS to the email service.
     }
 
     public LoginResponse getCurrentUser(String email) {
