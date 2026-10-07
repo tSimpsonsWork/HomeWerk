@@ -22,14 +22,14 @@ public class UserController {
     private final UserService userService;
     private final SecurityContextRepository securityContextRepository;
 
-    //POST http://localhost:8080/auth/signup{"email": "test@example.com","displayName": "Test User","password": "Password123!"}
+    //POST http://localhost:8080/auth/signup{"email": "@gmail.com","displayName": "Test User","password": "stuff"}
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     public SignupResponse signup(@Valid @RequestBody SignupRequest request) {
         return userService.signup(request);
     }
 
-    //POST http://localhost:8081/auth/login
+    //POST http://localhost:8081/auth/login{"email": "@gmail.com","password": "stuff"}
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
 
@@ -49,6 +49,7 @@ public class UserController {
         return result.response();
     }
 
+    //POST  http://localhost:8081/auth/forgot-password// {"email": "@gmail.com"}
     @PostMapping("/forgot-password")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public ForgotPasswordResponse forgotPassword(
@@ -65,6 +66,15 @@ public class UserController {
         return new ForgotPasswordResponse(
                 "If an account exists for this email, password reset instructions will be sent."
         );
+    }
+
+    //POST  http://localhost:8081/auth/recover-password// {"token": "raw","newPassword": "stuff"}
+    @PostMapping("/recover-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void recoverPassword(
+            @Valid @RequestBody PasswordRecoveryRequest request
+    ) {
+        userService.recoverPassword(request);
     }
 
     @GetMapping("/me")

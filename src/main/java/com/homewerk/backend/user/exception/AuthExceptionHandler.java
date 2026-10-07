@@ -31,4 +31,15 @@ public class AuthExceptionHandler {
                 "Invalid email or password."
         );
     }
+
+    @ExceptionHandler(InvalidPasswordRecoveryTokenException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleInvalidPasswordRecoveryToken(
+            InvalidPasswordRecoveryTokenException exception) {
+
+        return new ApiErrorResponse(
+                ErrorCode.INVALID_PASSWORD_RECOVERY_TOKEN,
+                "Invalid or expired recovery token."
+        );
+    }
 }
