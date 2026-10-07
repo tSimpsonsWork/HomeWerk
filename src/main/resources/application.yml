@@ -39,6 +39,7 @@ logging:
     com.zaxxer.hikari: WARN
     # Web server
     org.apache.tomcat: WARN
+    com.homewerk.backend.user.service: DEBUG
 
 
 server:

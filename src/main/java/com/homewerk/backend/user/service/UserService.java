@@ -1,14 +1,12 @@
 package com.homewerk.backend.user.service;
 
-import com.homewerk.backend.user.dto.LoginRequest;
-import com.homewerk.backend.user.dto.LoginResponse;
-import com.homewerk.backend.user.dto.SignupRequest;
-import com.homewerk.backend.user.dto.SignupResponse;
+import com.homewerk.backend.user.dto.*;
 import com.homewerk.backend.user.enums.PasswordResetType;
 import com.homewerk.backend.user.enums.UserRole;
 import com.homewerk.backend.user.enums.UserStatus;
 import com.homewerk.backend.user.exception.EmailAlreadyExistsException;
 import com.homewerk.backend.user.exception.InvalidCredentialsException;
+import com.homewerk.backend.user.exception.InvalidPasswordRecoveryTokenException;
 import com.homewerk.backend.user.model.PasswordResetToken;
 import com.homewerk.backend.user.model.User;
 import com.homewerk.backend.user.repository.PasswordResetTokenRepository;
@@ -122,6 +120,7 @@ public class UserService {
         );
     }
 
+    //sends token
     @Transactional
     public void forgotPassword(
             String email,
@@ -159,6 +158,8 @@ public class UserService {
         String rawToken =
                 passwordResetTokenService.generateRawToken();
 
+        log.debug("DEV PASSWORD RECOVERY TOKEN={}", rawToken);
+
         String tokenHash =
                 passwordResetTokenService.hashToken(rawToken);
 
@@ -183,6 +184,49 @@ public class UserService {
 
         // rawToken is still here in memory.
         // Later we'll pass THIS to the email service.
+    }
+
+    //uses token from forgetPassword
+    @Transactional
+    public void recoverPassword(PasswordRecoveryRequest request) {
+
+        String tokenHash =
+                passwordResetTokenService.hashToken(
+                        request.token()
+                );
+
+        PasswordResetToken resetToken =
+                passwordResetTokenRepository
+                        .findByTokenHash(tokenHash)
+                        .orElseThrow(
+                                InvalidPasswordRecoveryTokenException::new
+                        );
+
+        if (resetToken.isUsed()) {
+            throw new InvalidPasswordRecoveryTokenException();
+        }
+
+        if (resetToken.getExpiresAt().isBefore(Instant.now())) {
+            throw new InvalidPasswordRecoveryTokenException();
+        }
+
+        if (resetToken.getResetType()
+                != PasswordResetType.FORGOT_PASSWORD) {
+            throw new InvalidPasswordRecoveryTokenException();
+        }
+
+        User user = resetToken.getUser();
+
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.newPassword()
+                )
+        );
+
+        resetToken.setUsed(true);
+
+        userRepository.save(user);
+        passwordResetTokenRepository.save(resetToken);
     }
 
     public LoginResponse getCurrentUser(String email) {
