@@ -23,6 +23,8 @@ app:
   bootstrap-admin:
     email: ${ADMIN_EMAIL:}
     password: ${ADMIN_PASSWORD:}
+  security:
+    admin-pin: ${ADMIN_PIN}
 
 
 logging:

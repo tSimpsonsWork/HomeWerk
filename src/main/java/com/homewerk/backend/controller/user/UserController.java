@@ -52,10 +52,7 @@ public class UserController {
     //POST  http://localhost:8081/auth/forgot-password// {"email": "@gmail.com"}
     @PostMapping("/forgot-password")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public ForgotPasswordResponse forgotPassword(
-            @Valid @RequestBody ForgotPasswordRequest request,
-            HttpServletRequest httpRequest
-    ) {
+    public ForgotPasswordResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
         String ipAddress = httpRequest.getRemoteAddr();
 
         userService.forgotPassword(
@@ -71,10 +68,18 @@ public class UserController {
     //POST  http://localhost:8081/auth/recover-password// {"token": "raw","newPassword": "stuff"}
     @PostMapping("/recover-password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void recoverPassword(
-            @Valid @RequestBody PasswordRecoveryRequest request
-    ) {
+    public void recoverPassword(@Valid @RequestBody PasswordRecoveryRequest request) {
         userService.recoverPassword(request);
+    }
+
+    //POST // http://localhost:8081/auth/change-password {"currentPassword": "oldAdminPassword","newPassword": "newAdminPassword","adminPin": "******"}
+    @PostMapping("/change-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
+        userService.changePassword(
+                authentication.getName(),
+                request
+        );
     }
 
     @GetMapping("/me")

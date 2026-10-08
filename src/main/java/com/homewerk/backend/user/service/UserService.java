@@ -1,5 +1,6 @@
 package com.homewerk.backend.user.service;
 
+import com.homewerk.backend.config.admin.AdminSecurityProperties;
 import com.homewerk.backend.user.dto.*;
 import com.homewerk.backend.user.enums.PasswordResetType;
 import com.homewerk.backend.user.enums.UserRole;
@@ -38,6 +39,7 @@ public class UserService {
     private final PasswordResetRateLimitService passwordResetRateLimitService;
     private final PasswordResetTokenService passwordResetTokenService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final AdminSecurityProperties adminSecurityProperties;
 
     public SignupResponse signup(SignupRequest request) {
 
@@ -122,10 +124,8 @@ public class UserService {
 
     //sends token
     @Transactional
-    public void forgotPassword(
-            String email,
-            String ipAddress
-    ) {
+    public void forgotPassword(String email, String ipAddress) {
+
         String normalizedEmail =
                 EmailValidationUtil.normalize(email);
 
@@ -154,6 +154,10 @@ public class UserService {
         }
 
         User user = optionalUser.get();
+        if (user.getRole() == UserRole.ADMIN) {
+            log.warn("PASSWORD_RECOVERY_BLOCKED role=ADMIN");
+            return;
+        }
 
         String rawToken =
                 passwordResetTokenService.generateRawToken();
@@ -229,6 +233,46 @@ public class UserService {
         passwordResetTokenRepository.save(resetToken);
     }
 
+    @Transactional
+    public void changePassword(
+            String authenticatedEmail,
+            ChangePasswordRequest request
+    ) {
+        User user = userRepository
+                .findByEmailIgnoreCase(authenticatedEmail)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        boolean currentPasswordMatches =
+                passwordEncoder.matches(
+                        request.currentPassword(),
+                        user.getPassword()
+                );
+
+        if (!currentPasswordMatches) {
+            throw new InvalidCredentialsException();
+        }
+
+        if (user.getRole() == UserRole.ADMIN) {
+
+            if (request.adminPin() == null) {
+                throw new InvalidCredentialsException();
+            }
+
+            if (!request.adminPin().equals(
+                    adminSecurityProperties.getAdminPin()
+            )) {
+                throw new InvalidCredentialsException();
+            }
+        }
+
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.newPassword()
+                )
+        );
+
+        userRepository.save(user);
+    }
     public LoginResponse getCurrentUser(String email) {
 
         User user = userRepository
